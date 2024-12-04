@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import astropy.constants as const
-r_e = const.R_earth.value  # radius earth [m]
+from initial_conditions import *
+
 
 def make_graf(positions):
     fig,ax = plt.subplots()
