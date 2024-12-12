@@ -17,7 +17,7 @@ def get_atmospheric_data(time, height_km, lat_deg, lon_deg):
         tuple: Temperature (K) and air density (kg/m³).
     """
     # Convert time to required inputs
-    year = time.year
+    year = time.year-1 #last year 
     day_of_year = time.timetuple().tm_yday
     second_of_day = time.hour * 3600 + time.minute * 60 + time.second
 
@@ -49,7 +49,7 @@ def get_atmospheric_data(time, height_km, lat_deg, lon_deg):
 heights_km = np.linspace(0, 100, 101)  # Heights from 0 to 100 km
 
 # Define the time, latitude, and longitude for the data retrieval
-time = datetime(2023, 1, 1, 0, 0, 0)  # Example time (UTC)
+time = datetime.now()  # Example time (UTC)
 lat_deg = 0  # Example latitude (equator)
 lon_deg = 0  # Example longitude (prime meridian)
 
@@ -85,5 +85,4 @@ plt.legend()
 # Show the plots
 plt.tight_layout()
 plt .show()
-
 
