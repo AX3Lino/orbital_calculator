@@ -9,6 +9,8 @@ def atmospheric_drag(altitude,velo):
     d= Drag(velo,v_temp,altitude) / mass
     # print(d)
     return -d
+velocity = []
+
 
 def sym(pos,vel):
     orbits = 0
@@ -25,6 +27,7 @@ def sym(pos,vel):
 
         # Update velocity and position using Euler method
         vel += acc * dt
+        velocity.append(vel)
         pos += vel * dt
         t +=dt
         if r_temp < r_e:
@@ -39,7 +42,7 @@ def sym(pos,vel):
                 # print(np.linalg.norm(vel))
                 # print(t)
                 orbits+=1
+    return velocity,positions
     print("time in 200-80km: ",science_time," s ", science_time/t*100, "% ", "time per orbit: ", science_time/orbits)
     print("orbits: ", orbits, "orbit time: ", t/orbits)
-
 
