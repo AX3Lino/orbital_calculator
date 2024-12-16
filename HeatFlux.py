@@ -1,171 +1,74 @@
 from nrlmsis_calculator import *
+from Heat_profile import *
 import numpy as np
-from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 
-class ProbeAnalysis:
-    def __init__(self, shape='sphere', volume=0.001):  # volume in m³ (1L = 0.001m³)
-        self.shape = shape
-        self.volume = volume
-        self.characteristic_length = self._calculate_characteristic_length()
-        
-    def _calculate_characteristic_length(self):
-        """Calculate characteristic length based on shape and volume"""
-        if self.shape == 'sphere':
-            # For sphere, characteristic length is diameter
-            return 2 * (3 * self.volume / (4 * np.pi))**(1/3)
-        elif self.shape == 'square':
-            # For cube, characteristic length is side length
-            return self.volume**(1/3)
-        elif self.shape == 'double_cone':
-            # Assuming height = 2*base radius for double cone
-            radius = (3 * self.volume / (2 * np.pi))**(1/3)
-            return 4 * radius  # Total length
-        return None
+# Constants
+VELOCITY = 7800  # Constant velocity in m/s (orbital velocity)
+ALTITUDE = 100000  # Constant altitude in meters (200 km)
+SIMULATION_TIME = 3600*2  # Total simulation time in seconds
+TIME_STEPS = 1000  # Number of time steps
+C_IRON = 449  # Heat capacity of iron in J/(kg·K)
+INITIAL_TEMPERATURE = 300  # Initial temperature in Kelvin (27°C)
+IRON_DENSITY = 7850  # Density of the object in kg/m^3
+thickness = 0.02 #thicken in m
+# Setup for the simulation
+shape = Shape(name="double_cone", volume=0.001)  # Example: sphere with 0.001 m³ volume
+base_time = datetime.now()
 
-    def calculate_drag_coefficient(self, mach_number):
-        """Calculate drag coefficient based on shape and Mach number"""
-        if self.shape == 'sphere':
-            return 0.47 if mach_number < 1 else 0.92
-        elif self.shape == 'square':
-            return 1.05 if mach_number < 1 else 1.5
-        elif self.shape == 'double_cone':
-            return 0.5 if mach_number < 1 else 0.8
-        return None
+# Time span for the simulation
+time_span = np.linspace(0, SIMULATION_TIME, TIME_STEPS)
 
-    def calculate_reference_area(self):
-        """Calculate reference area based on shape"""
-        if self.shape == 'sphere':
-            radius = (3 * self.volume / (4 * np.pi))**(1/3)
-            return np.pi * radius**2
-        elif self.shape == 'square':
-            side = self.volume**(1/3)
-            return side**2
-        elif self.shape == 'double_cone':
-            radius = (3 * self.volume / (2 * np.pi))**(1/3)
-            return np.pi * radius**2
-        return None
+# Precompute heat flux, accumulated heat, and temperature
+heat_fluxes = []
+accumulated_heat = []
+temperatures = []
+current_accumulated_heat = 0
 
-    def calculate_heat_flux(self, velocity, density, position=None):
-        """
-        Calculate heat flux using Sutton-Graves equation
-        position: normalized position along the body (0 to 1)
-        """
-        k = 1.742e-4  # Sutton-Graves constant
-        nose_heat_flux = k * np.sqrt(density / self.characteristic_length) * velocity**3
+for t in time_span:
+    # Get atmospheric properties
+    temperature, density = nrlmsis(base_time + timedelta(seconds=t), ALTITUDE / 1000, 0, 0)
 
-        if position is not None:
-            # Distribute heat flux along the body based on position
-            if self.shape == 'sphere':
-                # Spherical distribution
-                theta = position * np.pi
-                return nose_heat_flux * np.cos(theta)
-            elif self.shape == 'square':
-                # Simple linear reduction
-                return nose_heat_flux * (1 - position)
-            elif self.shape == 'double_cone':
-                # Conical distribution with peak at nose
-                return nose_heat_flux * np.exp(-2 * position)
-        return nose_heat_flux
+    # Compute heat flux
+    heat_flux = shape.calculate_heat_flux_coefficient(density, VELOCITY)
 
-def simulate_orbit(probe, initial_altitude=200000, duration_hours=24):
-    """Simulate orbital decay and heating"""
-    # Orbital parameters
-    R_earth = 6371000  # Earth radius in meters
-    g0 = 9.81  # m/s²
-    mass = 1.0  # kg (assumed)
-    
-    # Time array
-    t = np.linspace(0, duration_hours * 3600, 1000)
-    
-    # Initial conditions [r, v, θ]
-    y0 = [R_earth + initial_altitude, np.sqrt(g0 * R_earth**2 / (R_earth + initial_altitude)), 0]
-    
-    def orbital_decay(y, t):
-        r, v, theta = y
-        
-        # Get atmospheric density at current altitude
-        altitude_km = (r - R_earth) / 1000
-        _, density = get_atmospheric_data(datetime.now(), altitude_km, 0, 0)
-        
-        # Calculate drag
-        Cd = probe.calculate_drag_coefficient(v / 340)  # Approximate Mach number
-        A = probe.calculate_reference_area()
-        drag = -0.5 * density * v**2 * Cd * A / mass
-        
-        # Equations of motion
-        dr_dt = v * np.sin(theta)
-        dv_dt = drag - g0 * (R_earth/r)**2 * np.sin(theta)
-        dtheta_dt = v * np.cos(theta) / r
-        
-        return [dr_dt, dv_dt, dtheta_dt]
-    
-    # Solve orbital equations
-    solution = odeint(orbital_decay, y0, t)
-    
-    return t, solution
+    # Update accumulated heat
+    current_accumulated_heat += heat_flux * shape.reference_area * (SIMULATION_TIME / TIME_STEPS)
 
-def plot_results(probe, t, solution):
-    """Generate plots for the analysis"""
-    # Calculate derived quantities
-    altitudes = solution[:, 0] - 6371000  # Convert radius to altitude
-    velocities = solution[:, 1]
-    
-    # Calculate heat flux along the trajectory
-    heat_fluxes = []
-    for i in range(len(t)):
-        _, density = get_atmospheric_data(datetime.now(), altitudes[i]/1000, 0, 0)
-        heat_fluxes.append(probe.calculate_heat_flux(velocities[i], density))
-    
-    # Plot results
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 12))
-    
-    # Altitude vs time
-    ax1.plot(t/3600, altitudes/1000)
-    ax1.set_xlabel('Time (hours)')
-    ax1.set_ylabel('Altitude (km)')
-    ax1.set_title('Orbital Decay')
-    
-    # Heat flux vs time
-    ax2.plot(t/3600, np.array(heat_fluxes)/1e6)
-    ax2.set_xlabel('Time (hours)')
-    ax2.set_ylabel('Heat Flux (MW/m²)')
-    ax2.set_title('Heat Flux vs Time')
-    
-    # Heat flux distribution
-    positions = np.linspace(0, 1, 100)
-    distributed_flux = [probe.calculate_heat_flux(velocities[0], 
-                                                get_atmospheric_data(datetime.now(), 
-                                                                   altitudes[0]/1000, 0, 0)[1],
-                                                position) for position in positions]
-    ax3.plot(positions, np.array(distributed_flux)/1e6)
-    ax3.set_xlabel('Normalized Position')
-    ax3.set_ylabel('Heat Flux (MW/m²)')
-    ax3.set_title('Heat Flux Distribution')
-    
-    # Accumulated heat
-    accumulated_heat = np.cumsum(np.array(heat_fluxes) * probe.calculate_reference_area() * (t[1]-t[0]))
-    ax4.plot(t/3600, accumulated_heat/1e6)
-    ax4.set_xlabel('Time (hours)')
-    ax4.set_ylabel('Accumulated Heat (MJ)')
-    ax4.set_title('Accumulated Heat')
-    
-    plt.tight_layout()
-    return fig
+    # Compute temperature
+    current_temperature = INITIAL_TEMPERATURE + current_accumulated_heat / (IRON_DENSITY * C_IRON)/thickness
 
-# Example usage:
-if __name__ == "__main__":
-    shapes = ['sphere', 'square', 'double_cone']
-    for shape in shapes:
-        probe = ProbeAnalysis(shape=shape)
-        t, solution = simulate_orbit(probe)
-        fig = plot_results(probe, t, solution)
-        plt.savefig(f'{shape}_analysis.png')
-        plt.close()
+    heat_fluxes.append(heat_flux)
+    accumulated_heat.append(current_accumulated_heat)
+    temperatures.append(current_temperature)
 
+# Plot results
+fig, axs = plt.subplots(3, 1, figsize=(10, 12))
 
-probe = ProbeAnalysis(shape='sphere')  # or 'square' or 'double_cone'
-t, solution = simulate_orbit(probe)
-plot_results(probe, t, solution)
+# Heat flux vs time
+axs[0].plot(time_span, heat_fluxes, label="Heat Flux")
+axs[0].set_title("Heat Flux vs Time")
+axs[0].set_xlabel("Time (s)")
+axs[0].set_ylabel("Heat Flux (W/m²)")
+axs[0].grid()
+axs[0].legend()
+
+# Accumulated heat vs time
+axs[1].plot(time_span, accumulated_heat, label="Accumulated Heat", color="orange")
+axs[1].set_title("Accumulated Heat vs Time")
+axs[1].set_xlabel("Time (s)")
+axs[1].set_ylabel("Accumulated Heat (J)")
+axs[1].grid()
+axs[1].legend()
+
+# Temperature vs time
+axs[2].plot(time_span, temperatures, label="Temperature", color="red")
+axs[2].set_title("Temperature vs Time")
+axs[2].set_xlabel("Time (s)")
+axs[2].set_ylabel("Temperature (K)")
+axs[2].grid()
+axs[2].legend()
+
+plt.tight_layout()
 plt.show()

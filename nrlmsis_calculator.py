@@ -3,7 +3,8 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 
-def get_atmospheric_data(time, height_km, lat_deg, lon_deg):
+
+def get_atmospheric_data(height_km, lat_deg, lon_deg):
     """
     Get temperature and air density from the NRLMSISE-00 model.
     
@@ -16,6 +17,7 @@ def get_atmospheric_data(time, height_km, lat_deg, lon_deg):
     Returns:
         tuple: Temperature (K) and air density (kg/m³).
     """
+    time = datetime.now()
     # Convert time to required inputs
     year = time.year-1 #last year 
     day_of_year = time.timetuple().tm_yday
@@ -49,28 +51,33 @@ def get_atmospheric_data(time, height_km, lat_deg, lon_deg):
 
 if __name__ == "__main__":
     # Define the range of heights (in km) for which we want to get atmospheric data
-    heights_km = np.linspace(0, 100, 101)  # Heights from 0 to 100 km
-    
+    heights_km = np.linspace(0, 500, 101)  # Heights from 0 to 100 km
+
     # Define the time, latitude, and longitude for the data retrieval
     time = datetime.now()  # Example time (UTC)
+    print(time)
     lat_deg = 0  # Example latitude (equator)
     lon_deg = 0  # Example longitude (prime meridian)
 
     # Initialize lists to store temperature and density data
     temperatures = []
     densities = []
+    baro = []
+    rho_0=get_atmospheric_data(1, lat_deg, lon_deg)[1]
+    bar= lambda h, T: rho_0*np.exp(-(9.80665*(h-1000))/(287.058*T))
     # Retrieve atmospheric data for each height
     for height_km in heights_km:
-        temp, density = get_atmospheric_data(time, height_km, lat_deg, lon_deg)
+        temp, density = get_atmospheric_data(height_km, lat_deg, lon_deg)
         temperatures.append(temp)
         densities.append(density)
+        baro.append(bar(height_km*1000,temp))
     # Convert lists to numpy arrays for plotting
     temperatures = np.array(temperatures)
     densities = np.array(densities)
     # Plot temperature vs. height
     plt.figure(figsize=(10, 5))
     plt.subplot(1, 2, 1)
-    plt.plot(heights_km, temperatures, label='Temperature (K)')
+    plt.plot(heights_km, temperatures, label='Temperature (K)', color='red')
     plt.xlabel('Height (km)')
     plt.ylabel('Temperature (K)')
     plt.title('Temperature vs. Height')
@@ -79,6 +86,7 @@ if __name__ == "__main__":
     # Plot density vs. height
     plt.subplot(1, 2, 2)
     plt.plot(heights_km, densities, label='Density (kg/m³)', color='orange')
+    plt.plot(heights_km,baro, label='Barometric formula')
     plt.yscale('log')
     plt.xlabel('Height (km)')
     plt.ylabel('Density (kg/m³)')

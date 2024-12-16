@@ -1,5 +1,4 @@
 from initial_conditions import *
-from nrlmsis_calculator import *
 
 
 def gravitational_acceleration(r_temp,poss):
@@ -10,7 +9,6 @@ def atmospheric_drag(altitude_km,velo):
     ro = get_atmospheric_data(datetime.now(),altitude_km,0,0)[1]
     d= Drag(velo,v_temp,ro) / mass
     return -d
-
 
 def sym(pos,vel):
     orbit = []
@@ -24,7 +22,10 @@ def sym(pos,vel):
     # velocity.append(vel)
     # time.append(t)
     for i in range(n_steps):
+        positions[i] = pos
         # Compute acceleration due to gravity
+        # print(gravitational_acceleration(pos))
+        # print(atmospheric_drag(pos,vel))
         r_temp = np.linalg.norm(pos)
         altitude = (r_temp - r_e)
         acc = gravitational_acceleration(r_temp,pos) + atmospheric_drag(altitude/1000, vel)
