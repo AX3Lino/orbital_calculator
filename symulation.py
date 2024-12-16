@@ -1,4 +1,5 @@
 from initial_conditions import *
+from nrlmsis_calculator import *
 
 
 def gravitational_acceleration(r_temp,poss):
@@ -6,7 +7,7 @@ def gravitational_acceleration(r_temp,poss):
 
 def atmospheric_drag(altitude_km,velo):
     v_temp = np.linalg.norm(velo)
-    ro = get_atmospheric_data(datetime.now(),altitude_km,0,0)[1]
+    ro = get_atmospheric_data(altitude_km,0,0)[1]
     d= Drag(velo,v_temp,ro) / mass
     return -d
 
