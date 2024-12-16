@@ -3,7 +3,7 @@ from symulation import *
 from initial_conditions import *
 
 # Main simulation loop
-
+ 
 positions,velocity,time = sym (Mothership.pos,Mothership.vel)
 positions2,velocity2,time2 = sym (Pod.pos,Pod.vel)
 # a = abs(max(positions[:,0]) - min(positions[:,0]))/2

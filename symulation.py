@@ -1,13 +1,12 @@
 from initial_conditions import *
 from nrlmsis_calculator import *
 
-
 def gravitational_acceleration(r_temp,poss):
     return -G * M_e / r_temp ** 3 * poss
 
-def atmospheric_drag(altitude_km,velo):
+def atmospheric_drag(t, altitude_km,velo):
     v_temp = np.linalg.norm(velo)
-    ro = get_atmospheric_data(altitude_km,0,0)[1]
+    ro = get_atmospheric_data(t, altitude_km,0,0)[1]
     d= Drag(velo,v_temp,ro) / mass
     return -d
 
@@ -29,7 +28,7 @@ def sym(pos,vel):
         # print(atmospheric_drag(pos,vel))
         r_temp = np.linalg.norm(pos)
         altitude = (r_temp - r_e)
-        acc = gravitational_acceleration(r_temp,pos) + atmospheric_drag(altitude/1000, vel)
+        acc = gravitational_acceleration(r_temp,pos) + atmospheric_drag(t,altitude/1000, vel)
 
         # Update velocity and position using Euler method
         vel += acc * dt
@@ -60,7 +59,7 @@ def sym(pos,vel):
                     orbit.append(t)
     # print("time in 200-80km: ", ionosphere_time, " s ", ionosphere_time / t * 100, "% ", "time per orbit: ",ionosphere_time / orbits)
     # print("orbits: ", orbits, "orbit time: ", orbit)
-    return positions,velocity,time
+    return positions, velocity, time
 
 
 

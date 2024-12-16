@@ -1,15 +1,15 @@
 from nrlmsise00 import gtd7_flat
-from datetime import datetime
+from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import numpy as np
 
 
-def get_atmospheric_data(height_km, lat_deg, lon_deg):
+def get_atmospheric_data(time_offset, height_km, lat_deg, lon_deg):
     """
     Get temperature and air density from the NRLMSISE-00 model.
     
     Parameters:
-        time (datetime): Date and time (UTC).
+        t (datetime): Date and time (UTC).
         height_km (float): Altitude in kilometers.
         lat_deg (float): Latitude in degrees.
         lon_deg (float): Longitude in degrees.
@@ -17,7 +17,7 @@ def get_atmospheric_data(height_km, lat_deg, lon_deg):
     Returns:
         tuple: Temperature (K) and air density (kg/m³).
     """
-    time = datetime.now()
+    time = datetime.utcnow() + timedelta(seconds=time_offset)
     # Convert time to required inputs
     year = time.year-1 #last year 
     day_of_year = time.timetuple().tm_yday
@@ -54,8 +54,6 @@ if __name__ == "__main__":
     heights_km = np.linspace(0, 500, 101)  # Heights from 0 to 100 km
 
     # Define the time, latitude, and longitude for the data retrieval
-    time = datetime.now()  # Example time (UTC)
-    print(time)
     lat_deg = 0  # Example latitude (equator)
     lon_deg = 0  # Example longitude (prime meridian)
 
@@ -63,11 +61,11 @@ if __name__ == "__main__":
     temperatures = []
     densities = []
     baro = []
-    rho_0=get_atmospheric_data(1, lat_deg, lon_deg)[1]
+    rho_0=get_atmospheric_data(0, 1, lat_deg, lon_deg)[1]
     bar= lambda h, T: rho_0*np.exp(-(9.80665*(h-1000))/(287.058*T))
     # Retrieve atmospheric data for each height
     for height_km in heights_km:
-        temp, density = get_atmospheric_data(height_km, lat_deg, lon_deg)
+        temp, density = get_atmospheric_data(0, height_km, lat_deg, lon_deg)
         temperatures.append(temp)
         densities.append(density)
         baro.append(bar(height_km*1000,temp))

@@ -101,7 +101,7 @@ class Shape:
 
 if __name__ == "__main__":
     # Example usage
-    temp,den=nrlmsis(datetime.now(), 120, 0, 0)
+    temp,den=nrlmsis(0, 120, 0, 0)
     print(temp, den)
     shapes = [
         {"name": "sphere", "volume": 0.001,},
