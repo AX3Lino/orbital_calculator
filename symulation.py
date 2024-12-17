@@ -15,6 +15,8 @@ def sym(satellite):
     orbits = 0
     ionosphere_time = 0
     t=0
+    pos = satellite.pos
+    vel = satellite.vel
     positions=np.array(satellite.pos, ndmin=2)
     velocity = np.array(satellite.vel, ndmin=2)
     time=np.array(t)
