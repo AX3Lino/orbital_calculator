@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 def get_atmospheric_data(time_offset, height_km, lat_deg, lon_deg):
     """
     Get temperature and air density from the NRLMSISE-00 model.
