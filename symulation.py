@@ -15,11 +15,13 @@ def sym(satellite):
     orbits = 0
     ionosphere_time = 0
     t=0
+    pos = satellite.pos
+    vel = satellite.vel
     positions=np.array(satellite.pos, ndmin=2)
     velocity = np.array(satellite.vel, ndmin=2)
     time=np.array(t)
     for i in range(n_steps):
-        r_temp = np.linalg.norm(pos)
+        r_temp = np.linalg.norm(satellite.pos)
         altitude = (r_temp - r_e)
         acc = gravitational_acceleration(r_temp,pos) + atmospheric_drag(t,altitude/1000, vel,satellite.mass,satellite.A)
 
