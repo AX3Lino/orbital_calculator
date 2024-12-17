@@ -1,6 +1,7 @@
-from ploting import *
+from output import *
 from symulation import *
 from initial_conditions import *
+
 
 # Main simulation loop
  
@@ -20,13 +21,9 @@ for i in range(len(positions2)):
     # print(delta_pos)
 #TODO: make simulation actually 3D
 
-# print(len(positions2),len(positions))
 
+# make_graf(positions1)
 # make_graf(positions2)
-# print(positions2,velocity2)
-# print(delta_pos)
+# delta_distance(positions1, positions2)
 
-# file = open('delta_pos.txt', 'w')
-# for lines in delta_pos:
-    # file.write(f"{str(lines)}\n")
-# file.close()
+
