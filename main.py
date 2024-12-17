@@ -5,6 +5,7 @@ from initial_conditions import *
 # Main simulation loop
  
 positions,velocity,time = sym (Mothership.pos,Mothership.vel)
+#print(positions,"positions", velocity,"velocity", time,"time") 
 positions2,velocity2,time2 = sym (Pod.pos,Pod.vel)
 # a = abs(max(positions[:,0]) - min(positions[:,0]))/2
 # b = abs(max(positions[:,1]) - min(positions[:,1]))/2

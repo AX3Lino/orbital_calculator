@@ -48,7 +48,6 @@ def get_atmospheric_data(time_offset, height_km, lat_deg, lon_deg):
 
 
 
-
 if __name__ == "__main__":
     # Define the range of heights (in km) for which we want to get atmospheric data
     heights_km = np.linspace(0, 500, 101)  # Heights from 0 to 100 km
@@ -61,11 +60,11 @@ if __name__ == "__main__":
     temperatures = []
     densities = []
     baro = []
-    rho_0=get_atmospheric_data(0, 1, lat_deg, lon_deg)[1]
+    rho_0=get_atmospheric_data(3600, 1, lat_deg, lon_deg)[1]
     bar= lambda h, T: rho_0*np.exp(-(9.80665*(h-1000))/(287.058*T))
     # Retrieve atmospheric data for each height
     for height_km in heights_km:
-        temp, density = get_atmospheric_data(0, height_km, lat_deg, lon_deg)
+        temp, density = get_atmospheric_data(3600, height_km, lat_deg, lon_deg)
         temperatures.append(temp)
         densities.append(density)
         baro.append(bar(height_km*1000,temp))
